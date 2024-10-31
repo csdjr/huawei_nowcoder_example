@@ -1,0 +1,147 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+typedef struct
+{
+	int* base;
+	int* top;
+}Stack;
+
+void initStack(Stack* s,int n)
+{
+	s->base = (int*)malloc(n * sizeof(int));
+	s->top = s->base;
+}
+
+void pushStack(Stack* s, int e)
+{
+	*s->top = e;
+	s->top++;
+}
+
+void popStack(Stack* s, int* e)
+{
+	s->top--;
+	*e = *s->top;
+}
+
+int getStackTop(Stack* s)
+{
+	return *(s->top - 1);
+}
+
+int isStackEmpty(Stack* s)
+{
+	return s->base == s->top;
+}
+
+int isHiger(int c1, int c2)
+{
+	if (c1 == '(')
+		return 1;
+	if (c1 == '*' || c1 == '/')
+		return 0;
+	if (c1 == '+' || c1 == '-')
+	{
+		if (c2 == '*' || c2 == '/')
+			return 1;
+		else
+			return 0;
+	}
+	return 0;
+}
+
+int calc(int n1, int n2, int c)
+{
+	switch (c)
+	{
+	case '+':return n1 + n2;
+	case '-':return n1 - n2;
+	case '*':return n1 * n2;
+	case '/':return n1 / n2;
+	default:
+		return 0;
+	}
+}
+
+
+int main()
+{
+	Stack calcs, nums;
+	int len;
+	char str[1000];
+	int n1, n2;
+	int c;
+	int i;
+	while (gets(str))
+	{
+		initStack(&nums,1000);
+		initStack(&calcs,1000);
+		
+		len = strlen(str);
+		for (i = 0; i < len; i++)
+		{
+			if (isdigit(str[i]) || (str[i] == '-' && (i == 0 || str[i - 1] == '(')))
+			{
+				char* p;
+				int figure = strtoul(&str[i], &p, 10);
+				pushStack(&nums,figure);
+				i = p - str - 1;
+				continue;
+			}
+			if (str[i] == '(')
+			{
+				pushStack(&calcs,str[i]);
+				continue;
+			}
+			if (str[i] == '+' || str[i] == '-' || str[i] == '*' || str[i] == '/')
+			{
+				if (isStackEmpty(&calcs))
+				{
+					pushStack(&calcs,str[i]);
+					continue;
+				}
+				c = getStackTop(&calcs);
+				if (isHiger(c, str[i]))
+				{
+					pushStack(&calcs,str[i]);
+					continue;
+				}
+				else
+				{
+					popStack(&nums,&n2);
+					popStack(&nums, &n1);
+					popStack(&calcs, &c);
+					n2 = calc(n1, n2, c);
+					pushStack(&nums,n2);
+					i--;
+					continue;
+				}
+			}
+			if (str[i] == ')')
+			{
+				while ((c = getStackTop(&calcs) )!= '(')
+				{
+					popStack(&nums,&n2);
+					popStack(&nums,&n1);
+					popStack(&calcs,&c);
+					n2 = calc(n1,n2,c);
+					pushStack(&nums,n2);
+				}
+				popStack(&calcs,&c);
+			}
+		}
+		while (!isStackEmpty(&calcs))
+		{
+			popStack(&nums,&n2);
+			popStack(&nums,&n1);
+			popStack(&calcs,&c);
+			n2 = calc(n1,n2,c);
+			pushStack(&nums,n2);
+		}
+		popStack(&nums,&n2);
+		printf("%d\n",n2);
+	}
+}
